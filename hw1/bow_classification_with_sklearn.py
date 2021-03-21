@@ -99,6 +99,43 @@ def _get_example_of_errors(texts_to_analyze, preds_to_analyze, labels_to_analyze
         print("\t- {}".format(line))
 
 
+def token(word):
+    sarray = []
+    if('/' in word and not '//' in word):
+        for i in word.split('/'):
+            if(len(i) != 0):
+                sarray = sarray + token(i)
+                sarray.append('/')
+        sarray.pop()
+    elif (',' in word):
+        for i in word.split(','):
+            if(len(i) != 0):
+                sarray = sarray + token(i)
+                sarray.append(',')
+        sarray.pop()
+    elif ('(' in word):
+        for i in word.split('('):
+            if(len(i) != 0):
+                sarray = sarray + token(i)
+                sarray.append('(')
+        sarray.pop()
+    elif (')' in word):
+        for i in word.split(')'):
+            if(len(i) != 0):
+                sarray = sarray + token(i)
+                sarray.append(')')
+        sarray.pop()
+    elif ('-' in word):
+        for i in word.split('-'):
+            if(len(i) != 0):
+                sarray = sarray + token(i)
+                sarray.append('-')
+        sarray.pop()
+    else:
+        sarray.append(word)
+    return sarray
+
+
 def preprocess_and_split_to_tokens(sentences: ArrayLike) -> ArrayLike:
     """
     :param sentences: (ArrayLike) ArrayLike objects of strings.
@@ -111,7 +148,27 @@ def preprocess_and_split_to_tokens(sentences: ArrayLike) -> ArrayLike:
     """
     array = []
     for sent in sentences:
-        sarray = re.compile("[a-z0-9'-]+").findall(sent.lower())
+        sarray = []
+        for word in sent.lower().split():
+            if(word.isalpha()):
+                sarray.append(word)
+            else:
+                larray = []
+                if (len(word) > 3 and word[-3:] == '<br'):
+                    larray.append(word[-3:])
+                    word = word[:-3]
+                while(len(word) != 0 and not word[0].isalpha()):
+                    sarray.append(word[0])
+                    word = word[1:]
+                while(len(word) != 0 and not word[-1].isalpha()):
+                    larray.append(word[-1])
+                    word = word[:-1]
+                if (len(word) > 2 and word[-2:] == '\'s'):
+                    larray.append(word[-2:])
+                    word = word[:-2]
+                sarray = sarray + token(word)
+                larray.reverse()
+                sarray = sarray + larray
         array.append(sarray)
     return array
 
@@ -151,7 +208,7 @@ def create_bow(sentences: ArrayLike, vocab: Dict[str, int] = None,
             if(word in vocab):
                 sarray[vocab[word]] = sarray[vocab[word]] + 1
         array.append(sarray)
-    return (vocab, np.array(array))
+    return (vocab, array)
 
 
 def run(test_xs=None, test_ys=None, num_samples=10000, verbose=True):
