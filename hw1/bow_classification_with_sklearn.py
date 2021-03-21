@@ -109,7 +109,11 @@ def preprocess_and_split_to_tokens(sentences: ArrayLike) -> ArrayLike:
     :return: ArrayLike objects of ArrayLike objects of tokens.
         e.g., [["I", "like", "apples"], ["I", "love", "python3"]]
     """
-    raise NotImplementedError
+    array = []
+    for sent in sentences:
+        sarray = re.compile("[a-z0-9'-]+").findall(sent.lower())
+        array.append(sarray)
+    return array
 
 
 def create_bow(sentences: ArrayLike, vocab: Dict[str, int] = None,
@@ -131,10 +135,23 @@ def create_bow(sentences: ArrayLike, vocab: Dict[str, int] = None,
 
     if vocab is None:
         print("{} Vocab construction".format(msg_prefix))
-        raise NotImplementedError
+        vocab = dict()
+        num = 0
+        for sent in tokens_per_sentence:
+            for word in sent:
+                if word not in vocab:
+                    vocab[word] = num
+                    num = num + 1
 
     print("{} Bow construction".format(msg_prefix))
-    raise NotImplementedError
+    array = []
+    for sent in tokens_per_sentence:
+        sarray = [0] * len(vocab)
+        for word in sent:
+            if(word in vocab):
+                sarray[vocab[word]] = sarray[vocab[word]] + 1
+        array.append(sarray)
+    return (vocab, np.array(array))
 
 
 def run(test_xs=None, test_ys=None, num_samples=10000, verbose=True):
@@ -145,7 +162,7 @@ def run(test_xs=None, test_ys=None, num_samples=10000, verbose=True):
     if verbose:
         print("\n[Example of xs]: [\"{}...\", \"{}...\", ...]\n[Example of ys]: [{}, {}, ...]".format(
             train_xs[0][:70], train_xs[1][:70], train_ys[0], train_ys[1]))
-        print("\n[Num Train]: {}\n[Num Test]: {}".format(len(train_ys), len(val_ys)))
+        print("\n[Num Train]: {}\n[Num Test]: {}".format(len(train_ys), len(val_ys)))\
 
     # Create bow representation of train set
     my_vocab, train_bows = create_bow(train_xs, msg_prefix="\n[Train]")
